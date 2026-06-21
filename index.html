@@ -99,7 +99,8 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,sans-serif;fo
 <button class="chip" data-rd="yr" onclick="setRD('yr')">年份</button>
 <button class="chip" data-rd="pm" onclick="setRD('pm')">支付方式</button>
 <button class="chip" data-rd="cm" onclick="setRD('cm')">小区</button>
-<button class="chip" data-rd="cl" onclick="setRD('cl')">收费员</button></div>
+<button class="chip" data-rd="cl" onclick="setRD('cl')">收费员</button>
+<button class="chip" id="dateRangeChip" onclick="toggleDateRange()">日期范围</button></div>
 <div style="display:flex;gap:8px;margin-bottom:10px;overflow-x:auto;white-space:nowrap">
 <button class="chip" data-rt="bar" onclick="setRT('bar')">柱状图</button>
 <button class="chip" data-rt="line" onclick="setRT('line')">折线图</button>
@@ -152,6 +153,18 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,sans-serif;fo
 <p id="confirmText" style="text-align:center;padding:14px 0;font-size:15px"></p>
 <div style="display:flex;gap:10px"><button class="btn btn-outline btn-block" onclick="closeModal('modalConfirm')" style="flex:1;height:48px">取消</button><button id="confirmOk" style="flex:1;height:48px;background:#FF3B30;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:500">确认</button></div></div></div>
 <div id="toast" class="ts"></div>
+
+<div id="modalDateRange" class="modal"><div class="modal-inner" style="max-width:360px;border-radius:var(--radius)">
+  <div class="mh"><h3>📅 选择日期范围</h3><button class="btn btn-sm btn-outline" onclick="closeModal('modalDateRange')" style="height:34px;border:none;font-size:20px">✕</button></div>
+  <div style="padding:10px 0">
+    <label class="fl">开始日期</label><input id="drStart" class="fi" type="date" style="margin-bottom:10px">
+    <label class="fl">结束日期</label><input id="drEnd" class="fi" type="date">
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-out-line btn-block" onclick="clearDateRange()">清除</button>
+    <button class="btn btn-primary btn-block" onclick="applyDateRange()">确认</button>
+  </div>
+</div></div>
 
 <script>
 window.onerror=function(m,u,l,c,e){var t=document.getElementById("toast");if(t){t.textContent="JS错误: "+m+" (行"+l+")";t.className="ts show"}document.getElementById("header").textContent="物业记账 ⚠️";console.error("window error",m,u,l,c,e)};
@@ -224,6 +237,10 @@ function pT(t){
 function sw(n){document.querySelectorAll(".tab").forEach(function(t,i){t.className="tab"+(i+1===n?" active":"")});document.querySelectorAll("#nav button").forEach(function(b,i){b.className=(i+1===n?" active":"")});if(n===2){lr();rC()}if(n===3)rR();if(n===4){rF();dc().then(function(c){document.getElementById("totalRecs").textContent=c})}}
 var switchTab=sw,closeModal=cm,saveAdd=sa,saveEdit=sE;
 
+function toggleDateRange(){var m=document.getElementById("modalDateRange");if(m.classList.contains("show")){cm("modalDateRange")}else{m.classList.add("show")}}
+function applyDateRange(){var s=document.getElementById("drStart").value,e=document.getElementById("drEnd").value;if(!s||!e){st("请选择开始和结束日期");return}RDS={start:s,end:e};cm("modalDateRange");var chip=document.getElementById("dateRangeChip");chip.classList.add("active");chip.textContent="日期范围:"+s.slice(5)+"~"+e.slice(5);RY="全部";renderChart()}
+function clearDateRange(){RDS=null;document.getElementById("drStart").value="";document.getElementById("drEnd").value="";var chip=document.getElementById("dateRangeChip");chip.classList.remove("active");chip.textContent="日期范围";RY="全部";renderChart()}
+
 document.getElementById("btnParse").addEventListener("click",function(){var t=document.getElementById("inputText").value.trim();if(!t){st("请先粘贴");return}PR=pT(t);if(!PR.length){st("未能解析");return}rPT();document.getElementById("parseResult").style.display="block"});
 
 function rPT(){document.getElementById("statusText").textContent="已解析 "+PR.length+" 条";document.getElementById("confirmCount").textContent=PR.length;document.getElementById("confirmCountLabel").textContent="点击字段可修改";var t=gt(),h="";for(var i=0;i<PR.length;i++){var r=PR[i],o="";t.forEach(function(x){o+='<option value="'+x+'"'+(x===r.ft?" selected":"")+">"+x+"</option>"});o+='<option value="其他">其他</option>';h+='<div class="rc"><div class="rc-g">';h+='<div class="rc-i"><span class="rc-l">小区</span><input class="pi" data-i="'+i+'" data-f="cm" value="'+es(r.cm||"")+'" style="border:none;background:transparent;font-size:14px;width:100%;padding:0"></div>';h+='<div class="rc-i"><span class="rc-l">房号</span><input class="pi" data-i="'+i+'" data-f="un" value="'+es(r.un)+'" style="border:none;background:transparent;font-size:14px;font-weight:600;width:100%;padding:0"></div>';h+='<div class="rc-i"><span class="rc-l">业主</span><input class="pi" data-i="'+i+'" data-f="nm" value="'+es(r.nm||"")+'" style="border:none;background:transparent;font-size:14px;width:100%;padding:0"></div>';h+='<div class="rc-i"><span class="rc-l">费用</span><select class="ps" data-i="'+i+'" data-f="ft" style="border:none;background:transparent;font-size:14px;padding:0">'+o+'</select></div>';h+='<div class="rc-i"><span class="rc-l">金额</span><input class="pi" data-i="'+i+'" data-f="am" type="number" step="0.01" value="'+r.am+'" style="border:none;background:transparent;font-size:14px;font-weight:600;color:var(--primary);width:100%;padding:0"></div>';h+='<div class="rc-i"><span class="rc-l">日期</span><input class="pi" data-i="'+i+'" data-f="dt" value="'+r.dt+'" style="border:none;background:transparent;font-size:14px;width:100%;padding:0"></div>';h+='<div class="rc-i"><span class="rc-l">支付</span><input class="pi" data-i="'+i+'" data-f="pm" value="'+es(r.pm||"")+'" style="border:none;background:transparent;font-size:14px;width:100%;padding:0"></div>';h+='<div class="rc-i"><span class="rc-l">账单</span><input class="pi" data-i="'+i+'" data-f="bs" value="'+es(r.bs||"")+'" placeholder="起" style="border:none;background:transparent;font-size:14px;width:45%;padding:0"> ~ <input class="pi" data-i="'+i+'" data-f="be" value="'+es(r.be||"")+'" placeholder="止" style="border:none;background:transparent;font-size:14px;width:45%;padding:0"></div>';h+='<div class="rc-i"><span class="rc-l">收费员</span><input class="pi" data-i="'+i+'" data-f="cl" value="'+es(r.cl||"")+'" style="border:none;background:transparent;font-size:14px;width:100%;padding:0"></div>';h+='<div class="rc-i"><span class="rc-l">备注</span><input class="pi" data-i="'+i+'" data-f="no" value="'+es(r.no||"")+'" style="border:none;background:transparent;font-size:14px;width:100%;padding:0"></div>';h+='</div><div class="rc-ac"><button class="pr" data-i="'+i+'" style="background:#FF3B30;color:#fff;height:40px">删除</button></div></div>'}document.getElementById("parseTable").innerHTML=h;document.querySelectorAll(".pi").forEach(function(e){e.addEventListener("input",function(ev){var idx=+ev.target.dataset.i,f=ev.target.dataset.f;if(f==="am")PR[idx].am=parseFloat(ev.target.value)||0;else PR[idx][f]=ev.target.value})});document.querySelectorAll(".ps").forEach(function(e){e.addEventListener("change",function(ev){PR[+ev.target.dataset.i][ev.target.dataset.f]=ev.target.value})});document.querySelectorAll(".pr").forEach(function(e){e.addEventListener("click",function(ev){PR.splice(+ev.target.dataset.i,1);if(!PR.length)document.getElementById("parseResult").style.display="none";else rPT()})})}
@@ -251,7 +268,7 @@ function sE(){var u=document.getElementById("e3").value.trim(),am=parseFloat(doc
 function cD(id){document.getElementById("confirmText").textContent="确定要删除这条记录吗？";var b=document.getElementById("confirmOk");b.onclick=function(){b.disabled=true;cm("modalConfirm");AR=AR.filter(function(x){return x.id!==id});FR=FR.filter(function(x){return x.id!==id});rL();dd(id)};document.getElementById("modalConfirm").className="modal show"}
 
 var RC=["#4F46E5","#34C759","#FF9500","#FF3B30","#AF52DE","#FF2D55","#007AFF","#30D158","#5E5CE6","#FFD60A"];
-var RD="ft",RT="bar",RY="全部",RDAT=[];
+var RD="ft",RT="bar",RY="全部",RDS=null,RDAT=[];
 var RDN={ft:"费用类型",unKey:"按户汇总",dt:"月度趋势",yr:"年份趋势",pm:"支付方式",cm:"小区",cl:"收费员"};
 function setRD(d){RD=d;renderChart()}
 function setRT(t){RT=t;renderChart()}
@@ -272,11 +289,19 @@ function renderChart(){
     document.getElementById("yearFilter").innerHTML='';
     return;
   }
-  var years=getYears(RDAT);
+  // 日期范围筛选
+  var frs=RDAT.slice();
+  if(RDS&&RDS.start&&RDS.end){
+    frs=frs.filter(function(r){
+      if(!r.dt)return false;
+      return r.dt>=RDS.start && r.dt<=RDS.end;
+    });
+  }
+  var years=getYears(frs);
   var yh='<button class="chip'+(RY==="全部"?" active":"")+'" data-ry="全部" onclick="setRY(this.dataset.ry)">全部</button>';
   years.forEach(function(y){yh+='<button class="chip'+(RY===y?" active":"")+'" data-ry="'+y+'" onclick="setRY(this.dataset.ry)">'+y+'年</button>'});
   document.getElementById("yearFilter").innerHTML=yh;
-  var frs=filterByYear(RDAT,RY);
+  frs=filterByYear(frs,RY);
   if(!frs.length){
     document.getElementById("mainChart").innerHTML='<div style="padding:30px;text-align:center;color:var(--text2)">该年份暂无数据</div>';
     document.getElementById("chartTable").innerHTML='';
@@ -290,7 +315,7 @@ function renderChart(){
   var w=document.getElementById("mainChart").clientWidth||320;
   var h=RD==="dt"?240:220;
   if(RT==="hbar")h=Math.max(200,data.length*32+30);
-  document.getElementById("chartTitle").textContent="📊 按"+RDN[RD]+" · "+(RT==="bar"?"柱状图":RT==="line"?"折线图":RT==="pie"?"饼图":"条形图")+(RY!=="全部"?"（"+RY+"年）":"");
+  document.getElementById("chartTitle").textContent="📊 按"+RDN[RD]+" · "+(RT==="bar"?"柱状图":RT==="line"?"折线图":RT==="pie"?"饼图":"条形图")+(RY!=="全部"?"（"+RY+"年）":"")+(RDS&&RDS.start?"（"+RDS.start.slice(5)+"~"+RDS.end.slice(5)+"）":"");
   var chart="";
   if(RT==="bar")chart=fmtBar(w,h,data);
   else if(RT==="line")chart=fmtLine(w,h,data);
